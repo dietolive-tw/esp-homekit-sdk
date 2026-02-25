@@ -628,14 +628,18 @@ static void garage_door_thread_entry(void *p)
                     // 门已打开
                     ESP_LOGI(TAG, "Sensor detected: Door OPENED");
                     
-                    // 如果门被手动打开（当前状态是关闭）
-                    if (current_state == DOOR_STATE_CLOSED) {
-                        update_door_state(DOOR_STATE_OPEN);
-                        // 同时更新目标状态
-                        if (target_door_state_char) {
-                            hap_val_t target_val = {.u = DOOR_TARGET_OPEN};
-                            hap_char_update_val(target_door_state_char, &target_val);
-                        }
+                    // 如果当前状态是正在开启，停止超时定时器
+                    if (current_state == DOOR_STATE_OPENING) {
+                        stop_door_timeout_timer();  // 传感器确认，停止超时定时器
+                    }
+                    
+                    // 无论当前状态如何，都更新为已打开（支持手动开门）
+                    update_door_state(DOOR_STATE_OPEN);
+                    
+                    // 同时更新目标状态
+                    if (target_door_state_char) {
+                        hap_val_t target_val = {.u = DOOR_TARGET_OPEN};
+                        hap_char_update_val(target_door_state_char, &target_val);
                     }
                 }
                 
